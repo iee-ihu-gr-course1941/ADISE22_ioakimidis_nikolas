@@ -1,72 +1,70 @@
-+ test 1 +
-+--------+
 
-CREATE TABLE `Deck` (
-  `Cid` tinyint NOT NULL,
-  `Figure` varchar(2) NOT NULL,
-  `Class` enum('heart', 'spade', 'club', 'diamond') NOT NULL,
-  `NextCard` tinyint DEFAULT NULL,
-  PRIMARY KEY (`Cid`, `Figure`, `Class`)
+CREATE TABLE Cards (
+  Cid tinyint NOT NULL,
+  Figure enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K') NOT NULL,
+  Class enum('heart', 'spade', 'club', 'diamond') NOT NULL,
+  Pid integer NULL DEFAULT NULL,
+  PRIMARY KEY (Cid, Figure, Class)
 );
-INSERT INTO deck VALUES 
-(1, '1', 'heart', NULL),
-(2, '2', 'heart', NULL),
-(3, '3', 'heart', NULL),
-(4, '4', 'heart', NULL),
-(5, '5', 'heart', NULL),
-(6, '6', 'heart', NULL),
-(7, '7', 'heart', NULL),
-(8, '8', 'heart', NULL),
-(9, '9', 'heart', NULL),
-(10, '10', 'heart', NULL),
-(11, 'J', 'heart', NULL),
-(12, 'Q', 'heart', NULL),
-(13, 'K', 'heart', NULL),
-(14, '1', 'diamond', NULL),
-(15, '2', 'diamond', NULL),
-(16, '3', 'diamond', NULL),
-(17, '4', 'diamond', NULL),
-(18, '5', 'diamond', NULL),
-(19, '6', 'diamond', NULL),
-(20, '7', 'diamond', NULL),
-(21, '8', 'diamond', NULL),
-(22, '9', 'diamond', NULL),
-(23, '10', 'diamond', NULL),
-(24, 'J', 'diamond', NULL),
-(25, 'Q', 'diamond', NULL),
-(26, 'K', 'diamond', NULL),
-(27, '1', 'club', NULL),
-(28, '2', 'club', NULL),
-(29, '3', 'club', NULL),
-(30, '4', 'club', NULL),
-(31, '5', 'club', NULL),
-(32, '6', 'club', NULL),
-(33, '7', 'club', NULL),
-(34, '8', 'club', NULL),
-(35, '9', 'club', NULL),
-(36, '10', 'club', NULL),
-(37, 'J', 'club', NULL),
-(38, 'Q', 'club', NULL),
-(39, 'K', 'club', NULL),
-(40, '1', 'spade', NULL),
-(41, '2', 'spade', NULL),
-(42, '3', 'spade', NULL),
-(43, '4', 'spade', NULL),
-(44, '5', 'spade', NULL),
-(45, '6', 'spade', NULL),
-(46, '7', 'spade', NULL),
-(47, '8', 'spade', NULL),
-(48, '9', 'spade', NULL),
-(49, '10', 'spade', NULL),
-(50, 'J', 'spade', NULL),
-(51, 'Q', 'spade', NULL),
-(52, 'K', 'spade', NULL);
+INSERT INTO Cards(Cid, Figure, Class) VALUES
+(1, '1', 'heart'),
+(2, '2', 'heart'),
+(3, '3', 'heart'),
+(4, '4', 'heart'),
+(5, '5', 'heart'),
+(6, '6', 'heart'),
+(7, '7', 'heart'),
+(8, '8', 'heart'),
+(9, '9', 'heart'),
+(10, '10', 'heart'),
+(11, 'J', 'heart'),
+(12, 'Q', 'heart'),
+(13, 'K', 'heart'),
+(14, '1', 'diamond'),
+(15, '2', 'diamond'),
+(16, '3', 'diamond'),
+(17, '4', 'diamond'),
+(18, '5', 'diamond'),
+(19, '6', 'diamond'),
+(20, '7', 'diamond'),
+(21, '8', 'diamond'),
+(22, '9', 'diamond'),
+(23, '10', 'diamond'),
+(24, 'J', 'diamond'),
+(25, 'Q', 'diamond'),
+(26, 'K', 'diamond'),
+(27, '1', 'club'),
+(28, '2', 'club'),
+(29, '3', 'club'),
+(30, '4', 'club'),
+(31, '5', 'club'),
+(32, '6', 'club'),
+(33, '7', 'club'),
+(34, '8', 'club'),
+(35, '9', 'club'),
+(36, '10', 'club'),
+(37, 'J', 'club'),
+(38, 'Q', 'club'),
+(39, 'K', 'club'),
+(40, '1', 'spade'),
+(41, '2', 'spade'),
+(42, '3', 'spade'),
+(43, '4', 'spade'),
+(44, '5', 'spade'),
+(45, '6', 'spade'),
+(46, '7', 'spade'),
+(47, '8', 'spade'),
+(48, '9', 'spade'),
+(49, '10', 'spade'),
+(50, 'J', 'spade'),
+(51, 'Q', 'spade'),
+(52, 'K', 'spade');
 
 
 
 
 CREATE TABLE `players` (
- `Pid` INTEGER,
+ `Pid` INTEGER NOT NULL,
  `Username` VARCHAR(20) DEFAULT NULL,
  `Token` VARCHAR(100) DEFAULT NULL,
  `LastAction` TIMESTAMP NULL DEFAULT NULL,
@@ -77,12 +75,32 @@ PRIMARY KEY (`Pid`)
 
 CREATE TABLE `GameStatus` (
  `status` enum('not active', 'waiting', 'playing', 'finished', 'aborded') NOT NULL DEFAULT 'not active',
- `p_turn` ENUM('P1','P2') DEFAULT NULL,
+ `pturn` INTEGER DEFAULT NULL,
  `result` ENUM('P1','P2') DEFAULT NULL,
  `last_change` timestamp NULL DEFAULT NULL
 );
-
 insert INTO game_status VALUES ('not active', NULL, NULL, NULL);
+
+
+
+
+CREATE TABLE `GameState` (
+ `Pid` INTEGER,
+ `Said` VARCHAR(2) DEFAULT NULL,
+ `c1` TINYINT NULL DEFAULT NULL,
+ `c2` TINYINT NULL DEFAULT NULL,
+ `c3` TINYINT NULL DEFAULT NULL,
+ `c4` TINYINT NULL DEFAULT NULL
+);
+
+
+
+
+CREATE TABLE `said` (
+ `Times` TINYINT NOT NULL,
+ `Figure` enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K') NOT NULL
+);
+
 
 
 
@@ -96,27 +114,37 @@ BEGIN
 	DELETE FROM said; 
 	INSERT INTO said(Times, Figure) VALUES (Sx, Sfigure);
 	
-END$$
+END $$
 
 
+-----------------------------------------
 
 DELIMITER $$
-CREATE PROCEDURE play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT)
-BEGIN	
-
-	DECLARE fi1, cl1, fi2, cl2, fi3, cl3, fi4, cl4 varchar;
-
-	SELECT Figure, Class INTO fi1, cl1 FROM p WHERE cid = c1 LIMIT 1;
-	SELECT Figure, Class INTO fi2, cl2 FROM p WHERE cid = c2 LIMIT 1;
-	SELECT Figure, Class INTO fi3, cl3 FROM p WHERE cid = c3 LIMIT 1;
-	SELECT Figure, Class INTO fi4, cl4 FROM p WHERE cid = c4 LIMIT 1;
-
-	INSERT INTO board(Cid, Figure, Class) VALUES (c1, @fi1, @cl1);
-	INSERT INTO board(Cid, Figure, Class) VALUES (c2, @fi2, @cl2);
-	INSERT INTO board(Cid, Figure, Class) VALUES (c3, @fi3, @cl3);
-	INSERT INTO board(Cid, Figure, Class) VALUES (c4, @fi4, @cl4);
+CREATE PROCEDURE splithands()
+BEGIN
 	
-	DELETE cid FROM p WHERE cid = (c1 OR c2 OR c3 OR c4)
+	SET @rownum = 0;
+	
+	UPDATE Cards SET Pid = ((@rownum:=@rownum+1) % 2) + 1 ORDER BY RAND();
+		
+END $$
+
+-----------------------------------------
+
+DELIMITER $$
+CREATE PROCEDURE play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT )
+BEGIN
+
+SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE pid=p AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
+
+
+IF @TimesInHand = 4 THEN 
+	UPDATE cards SET 
+	pid = 1
+	WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4 ;
+ELSE
+	SELECT @TimesInHand;
+END IF;
 	
 END $$
-DELIMITER;
+
