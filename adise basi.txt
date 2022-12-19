@@ -76,7 +76,7 @@ PRIMARY KEY (`Pid`)
 CREATE TABLE `GameStatus` (
  `status` enum('not active', 'waiting', 'playing', 'finished', 'aborded') NOT NULL DEFAULT 'not active',
  `pturn` INTEGER DEFAULT NULL,
- `result` ENUM('P1','P2') DEFAULT NULL,
+ `result` ENUM('P1','P2', 'P3', 'P4') DEFAULT NULL,
  `last_change` timestamp NULL DEFAULT NULL
 );
 insert INTO game_status VALUES ('not active', NULL, NULL, NULL);
@@ -103,13 +103,12 @@ CREATE TABLE `said` (
 
 
 
-
-
 _______________________________________________________________
 
 
+
 DELIMITER $$
-CREATE PROCEDURE say (IN Sx TINYINT, IN Sfigure VARCHAR(2))
+CREATE PROCEDURE Say (IN Sx TINYINT, IN Sfigure VARCHAR(2))
 BEGIN	
 	DELETE FROM said; 
 	INSERT INTO said(Times, Figure) VALUES (Sx, Sfigure);
@@ -117,34 +116,48 @@ BEGIN
 END $$
 
 
------------------------------------------
+/***********************************************************/
 
 DELIMITER $$
-CREATE PROCEDURE splithands()
+CREATE PROCEDURE Splithands()
 BEGIN
 	
 	SET @rownum = 0;
 	
-	UPDATE Cards SET Pid = ((@rownum:=@rownum+1) % 2) + 1 ORDER BY RAND();
+	UPDATE Cards SET Pid = ((@rownum:=@rownum+1) % 4) + 1 ORDER BY RAND();
 		
 END $$
 
------------------------------------------
+/***********************************************************/
 
 DELIMITER $$
-CREATE PROCEDURE play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT )
+CREATE PROCEDURE Play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT )
 BEGIN
 
-SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE pid=p AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
+	SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE pid=p AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
 
 
-IF @TimesInHand = 4 THEN 
-	UPDATE cards SET 
-	pid = 1
-	WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4 ;
-ELSE
-	SELECT @TimesInHand;
-END IF;
+	IF @TimesInHand = 4 THEN 
+		UPDATE cards SET 
+		pid = 0
+		WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4 ;
+	ELSE
+		SELECT @TimesInHand;
+	END IF;
 	
 END $$
 
+/***********************************************************/
+
+
+DELIMITER $$
+CREATE PROCEDURE Broom ()
+BEGIN	
+
+	UPDATE cards SET 
+	pid = NULL
+	WHERE pid=0;
+	
+END $$
+
+/***********************************************************/
