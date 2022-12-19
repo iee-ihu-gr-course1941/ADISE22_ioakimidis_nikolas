@@ -93,29 +93,6 @@ CREATE TABLE `GameState` (
  `c4` TINYINT NULL DEFAULT NULL
 );
 
-
-
-
-CREATE TABLE `said` (
- `Times` TINYINT NOT NULL,
- `Figure` enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K') NOT NULL
-);
-
-
-
-_______________________________________________________________
-
-
-
-DELIMITER $$
-CREATE PROCEDURE Say (IN Sx TINYINT, IN Sfigure VARCHAR(2))
-BEGIN	
-	DELETE FROM said; 
-	INSERT INTO said(Times, Figure) VALUES (Sx, Sfigure);
-	
-END $$
-
-
 /***********************************************************/
 
 DELIMITER $$
@@ -131,19 +108,45 @@ END $$
 /***********************************************************/
 
 DELIMITER $$
-CREATE PROCEDURE Play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT )
+CREATE PROCEDURE Play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT, IN say enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'))
 BEGIN
+SET @counter = 0;
 
-	SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE pid=p AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
+IF (c1 IS NULL OR c1='')THEN
+	SELECT @counter := @counter+1; 
+END IF;
 
+IF (c2 IS NULL OR c2='') THEN
+   SELECT @counter := @counter+1;
+END IF;
 
-	IF @TimesInHand = 4 THEN 
-		UPDATE cards SET 
-		pid = 0
-		WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4 ;
-	ELSE
-		SELECT @TimesInHand;
-	END IF;
+IF (c3 IS NULL OR c3='') THEN
+   SELECT @counter := @counter+1;
+END IF;
+
+IF (c4 IS NULL OR c4='') THEN
+   SELECT @counter := @counter+1;
+END IF;
+
+SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE pid=p AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
+
+SELECT COUNT(*) FROM cards WHERE c1=NULL OR c2=NULL OR c3=NULL OR c4=NULL ;
+
+IF @TimesInHand = 4 - @counter THEN 
+
+	UPDATE cards SET 
+	pid = 0
+	WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4 ;
+	
+
+/*	
+edo pera tha mpi to an ekane mpolfa
+INSERT INTO gamestate VALUES (p, , c1, c2, c3, c4)
+*/
+ELSE
+	SELECT @TimesInHand;
+END IF;
+	
 	
 END $$
 
@@ -161,3 +164,13 @@ BEGIN
 END $$
 
 /***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE PickUpBoardCards ()
+BEGIN	
+
+	UPDATE cards SET 
+	pid = p
+	WHERE pid=0;
+	
+END $$
