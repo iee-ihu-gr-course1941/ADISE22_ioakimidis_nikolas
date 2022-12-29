@@ -1,0 +1,259 @@
+CREATE OR REPLACE TABLE Cards (
+  Cid tinyint NOT NULL,
+  Figure enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K') NOT NULL,
+  Class enum('heart', 'spade', 'club', 'diamond') NOT NULL,
+  Pid integer NULL DEFAULT NULL,
+  PRIMARY KEY (Cid, Figure, Class)
+);
+INSERT INTO Cards(Cid, Figure, Class) VALUES
+(1, '1', 'heart'),
+(2, '2', 'heart'),
+(3, '3', 'heart'),
+(4, '4', 'heart'),
+(5, '5', 'heart'),
+(6, '6', 'heart'),
+(7, '7', 'heart'),
+(8, '8', 'heart'),
+(9, '9', 'heart'),
+(10, '10', 'heart'),
+(11, 'J', 'heart'),
+(12, 'Q', 'heart'),
+(13, 'K', 'heart'),
+(14, '1', 'diamond'),
+(15, '2', 'diamond'),
+(16, '3', 'diamond'),
+(17, '4', 'diamond'),
+(18, '5', 'diamond'),
+(19, '6', 'diamond'),
+(20, '7', 'diamond'),
+(21, '8', 'diamond'),
+(22, '9', 'diamond'),
+(23, '10', 'diamond'),
+(24, 'J', 'diamond'),
+(25, 'Q', 'diamond'),
+(26, 'K', 'diamond'),
+(27, '1', 'club'),
+(28, '2', 'club'),
+(29, '3', 'club'),
+(30, '4', 'club'),
+(31, '5', 'club'),
+(32, '6', 'club'),
+(33, '7', 'club'),
+(34, '8', 'club'),
+(35, '9', 'club'),
+(36, '10', 'club'),
+(37, 'J', 'club'),
+(38, 'Q', 'club'),
+(39, 'K', 'club'),
+(40, '1', 'spade'),
+(41, '2', 'spade'),
+(42, '3', 'spade'),
+(43, '4', 'spade'),
+(44, '5', 'spade'),
+(45, '6', 'spade'),
+(46, '7', 'spade'),
+(47, '8', 'spade'),
+(48, '9', 'spade'),
+(49, '10', 'spade'),
+(50, 'J', 'spade'),
+(51, 'Q', 'spade'),
+(52, 'K', 'spade');
+
+
+
+
+CREATE OR REPLACE TABLE `players` (
+ `Pid` INTEGER NOT NULL AUTO_INCREMENT,
+ `Username` VARCHAR(50) DEFAULT NULL,
+ `Token` VARCHAR(50) DEFAULT NULL,
+ `LastAction` TIMESTAMP NULL DEFAULT NULL,
+PRIMARY KEY (`Pid`)
+);
+
+
+
+CREATE OR REPLACE TABLE `GameDetails` (
+ `Status` enum('Not active', 'Waiting', 'Playing', 'Finished', 'Aborded') NOT NULL DEFAULT 'not active',
+ `FirstTurn` INTEGER DEFAULT NULL,
+ `Result` ENUM('P1','P2', 'P3', 'P4') DEFAULT NULL
+);
+insert INTO GameDetails VALUES ('not active', NULL, NULL);
+
+
+
+
+CREATE OR REPLACE TABLE `GameState` (
+ `Pid` INTEGER,
+ `Said` enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K') DEFAULT NULL,
+ `C1` TINYINT NULL DEFAULT NULL,
+ `C2` TINYINT NULL DEFAULT NULL,
+ `C3` TINYINT NULL DEFAULT NULL,
+ `C4` TINYINT NULL DEFAULT NULL,
+ `LastChange` timestamp NULL DEFAULT NULL
+);
+
+
+/************************************************************************************************************************************
+************************************************************************************************************************************/
+
+
+DELIMITER $$
+CREATE PROCEDURE Splithands()
+BEGIN
+	SET @rownum = 0;
+	UPDATE Cards SET Pid = ((@rownum:=@rownum+1) % 4) + 1 ORDER BY RAND();	
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE Play (IN p INTEGER, IN c1 TINYINT, IN c2 TINYINT, IN c3 TINYINT, IN c4 TINYINT, IN s enum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'), OUT isbluff BIT, OUT inhand BIT)
+BEGIN
+
+SET @counter = 0;
+
+IF (c1 IS NULL OR c1='')THEN
+	SET @counter := @counter+1;
+	SET @c1null := 1; 
+END IF;
+
+IF (c2 IS NULL OR c2='') THEN
+   SET @counter := @counter+1;
+   SET @c2null := 1;
+END IF;
+
+IF (c3 IS NULL OR c3='') THEN
+   SET @counter := @counter+1;
+   SET @c3null := 1;
+END IF;
+
+IF (c4 IS NULL OR c4='') THEN
+   SET @counter := @counter+1;
+   SET @c4null := 1;
+END IF;
+#SELECT @counter;
+
+SET @TimesInHand := (SELECT COUNT(*) FROM cards WHERE (pid=p) AND (cid=c1 OR cid=c2 OR cid=c3 OR cid=c4));
+
+IF @TimesInHand = (4 - @counter) THEN 
+
+	UPDATE cards SET 
+	pid = 0
+	WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4;
+	
+	SET @inhand = 1;
+	
+	UPDATE players SET LastAction = CURRENT_TIME WHERE pid=p;
+	
+	INSERT INTO gamestate VALUES (p, s, c1, c2, c3, c4, CURRENT_TIME);
+/*	
+	UPDATE gamestate g SET
+	g.Pid = p,
+	g.Said = s,
+	g.c1 = c1,
+	g.c2 = c2,
+	g.c3 = c3,
+	g.c4 = c4;
+*/
+	
+	IF s = (SELECT Figure FROM cards WHERE cid=c1) OR (@c1null = 1) AND
+		s = (SELECT Figure FROM cards WHERE cid=c2) OR (@c2null = 1) AND
+		s = (SELECT Figure FROM cards WHERE cid=c3) OR (@c3null = 1) AND
+		s = (SELECT Figure FROM cards WHERE cid=c4) OR (@c4null = 1) THEN
+		SET @isbluff = 0;
+	ELSE
+		SET @isbluff = 1;
+	END IF;
+	#SELECT Figure FROM cards WHERE cid=c1 OR cid=c2 OR cid=c3 OR cid=c4;
+	#SELECT s;
+	#SELECT @isbluff;
+	#SELECT @inhand;
+ELSE
+	SELECT 'mpika sto else, aka den exo ola ta fila sto xeri';
+	SET @inhand = 0;
+END IF;
+	
+	
+END $$
+
+/***********************************************************/
+
+
+DELIMITER $$
+CREATE PROCEDURE Broom ()
+BEGIN	
+	UPDATE cards SET 
+	pid = NULL
+	WHERE pid=0;
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE PickUpBoardCards (IN p INTEGER)
+BEGIN	
+	UPDATE cards SET 
+	pid = p
+	WHERE pid=0;
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE AddPlayer(IN Pname VARCHAR(50))
+BEGIN
+	# still on the making
+	
+	INSERT INTO players(Username, Token, LastAction) VALUES(Pname, LEFT(UUID(), 50), CURRENT_TIME);
+	
+	SET @NumOfP := (SELECT COUNT(*) FROM players);
+	SELECT @numOfP;
+	
+	IF @NumOfP < 4 THEN
+		UPDATE GameDetails SET Status='Waiting';
+	ELSE
+		UPDATE GameDetails SET Status='Playing';	
+	END IF;
+
+		
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE Objection(IN p INTEGER, IN isbluff TINYINT)
+BEGIN
+	# still on the making
+
+	IF isbluff = 0 THEN
+	   CALL PickUpBoardCards(p);
+		SELECT 'pernis esi ta xartia kai o bro pezi ksana';
+	ELSE
+		SET @lastplayer := (SELECT pid FROM gamestate ORDER BY pid DESC LIMIT 1);
+		#SELECT @lastplayer;
+		CALL PickUpBoardCards(@lastplayer);
+		SELECT 'perni o allos ta xartia kai pezis esi';
+	END IF;		
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE ShowHand (IN p INTEGER)
+BEGIN
+	SELECT Cid, Figure, Class FROM cards WHERE pid=p;
+END $$
+
+/***********************************************************/
+
+DELIMITER $$
+CREATE PROCEDURE TokenToPid (IN t VARCHAR(50), OUT p INTEGER)
+BEGIN	
+	#needs some more testing
+
+	SELECT Pid INTO p
+	FROM players
+	WHERE Token=t;
+END $$
+
+/***********************************************************/
