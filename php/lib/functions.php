@@ -65,9 +65,9 @@ function PlayCards($pid){
 
 function iObject($pid){
     global $mysqli;
-    $sql =  'call Objection(?)';
+    $sql =  'call Objection(?,?)';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('i', $pid);
+    $st->bind_param('ii', $pid, $GLOBALS['input']['DoIt']);
     $st->execute();
     $result = $st->get_result()->fetch_assoc();
     $result = $result['@Won'];
@@ -78,7 +78,7 @@ function iObject($pid){
 
 
 
-////////////////// These functions aren't used for requests //////////////////
+////////////////// These are system functions and aren't used for requests //////////////////
 
 function PrepareNewGame(){
     global $mysqli;
@@ -109,5 +109,37 @@ function CheckForWinner() {
     return $result;
 }
 
+function CheckWhoPlayedLast() {
+    global $mysqli;
+    $sql = "CALL WhoPlayedLast()";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+    $result = $result['@lastplayer'];
 
+    $st->close();
+    return $result;
+}
+
+function FindPLayOrder($pid){
+    global $mysqli;
+    $sql =  'call CalculatePlayOrder(?)';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('i', $pid);
+    $st->execute();
+    $st->close();
+}
+
+function CanIPlay($pid){
+    global $mysqli;
+    $sql =  'call AllowedToplay(?)';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('i', $pid);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+    $result = $result['@Allowed'];
+
+    $st->close();
+    return $result;
+}
 ?>
