@@ -9,6 +9,21 @@ $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
 $GLOBALS['input'] = json_decode(file_get_contents('php://input'), true);
 session_start();
 
+/////
+//print HowManyObjected();
+//print ShowSay();
+/////
+
+//$result = MakeNewRound();
+// if ($result != 0) {
+//     print json_encode(['winner' => $result]);
+//     exit;
+// } 
+
+if (CanIPlay(FromTokenToPid()) == 1) {
+    print ("It's your turn to play cards!!!\n");
+}
+
 switch ($request[0]) {
 
     case 'GetPlayersHand':
@@ -53,104 +68,137 @@ switch ($request[0]) {
     break;
 
     case 'Play':
-        $pid = FromTokenToPid();
-        $result = CanIPlay($pid);
-        if ($result == 0){
-        
-            header("HTTP/1.1 400 Bad Request");
-            print json_encode(['errormesg' => "Not your turn."]);
+        if ($method == 'POST') {
+
             
-        } else {
-            if ($method == 'POST') {
-                $result = PlayCards($pid);
-                if ($result == 1) {
-                    print json_encode(['errormesg' => "Cards not in player's hand"]);
-                    exit;
+            $pid = FromTokenToPid();
+            $result = CanIPlay($pid);
+
+            if ($result == 0) {
+                print json_encode(['errormesg' => "Not your turn."]);
+            } else {
+
+                $result = IsMasterlocked();
+                if ($result == 0) {
+
+                    $result = PlayCards($pid);
+                    if ($result == 1) {
+                        print json_encode(['errormesg' => "Cards not in player's hand"]);
+                        exit;
+                    } 
+                    for ($i = 1; $i <= 4; $i++) {
+                        if ($i != $pid) {
+                            SetObjected($i, 0);
+                        }
+                    }
+                    FindPLayOrder($pid+1);
+                    LockMasterPlay(1);
+                    //json_encode(['Said' => "ShowSay()"]);
+                } else {
+                    print json_encode(['errormesg' => "You can not throw a new Figure."]);
                 }
-            } else {    
-                header("HTTP/1.1 400 Bad Request");
-                print json_encode(['errormesg' => "Method $method not allowed here."]);
             }
-        }    
+        }else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]);
+        }   
+    break;
+
+    case 'PlaySameRound':
+        if ($method == 'POST') {
+
+            $pid = FromTokenToPid();
+            $result = CanIPlay($pid);
+            if ($result == 1){
+
+                $result = IsMasterlocked();
+                if ($result == 1) { 
+
+                    $result = HowManyObjected();
+                    if  ($result < 4) {
+                        print json_encode(['errormesg' => "Wait for the other playes to decide if they are objecting."]);
+                    } else {
+                        $s = ShowSay();
+                        $pid = FromTokenToPid();
+                        $result =  PlayCardsInSameRound($pid, $s);
+                        if ($result == 1) {
+                            print json_encode(['errormesg' => "Cards not in player's hand"]);
+                            exit;
+                        }
+                        for ($i = 1; $i <= 4; $i++) {
+                            if ($i != $pid) {
+                                SetObjected($i, 0);
+                            }
+                        }
+                        FindPLayOrder($pid+1);
+                        //json_encode(['Said' => "ShowSay()"]);
+                    }
+                } else {
+                    print json_encode(['errormesg' => "You should play with a new Figure :)"]);
+                    exit;  
+                }     
+            } else {
+                print json_encode(['errormesg' => "It's not your turn to play."]);
+                exit; 
+            }        
+        }else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]); 
+        }   
     break;
 
     case 'Objection':
         if ($method == 'POST') {
-
-        $pid = FromTokenToPid();    
-        $result = iObject($pid);    
             
-        if ($result == 1) {
-            print json_encode(['bluff' => 'TRUE']);
-            echo "\n He gets all the cards back :)";
-        } else if ($result == 0){
-            print json_encode(['bluff' => 'FALSE']);
-            echo "\n You get all the cards :(";
+            $pid = FromTokenToPid();
+            $result = HaveIObjected($pid);
+            if ($result == 0){
+                $pid = FromTokenToPid();    
+                $result = iObject($pid);    
+                    
+                if ($result == 1) {
+                    print json_encode(['bluff' => 'TRUE']);
+                    echo "\n He gets all the cards back :)";
+                } else if ($result == 0){
+                    print json_encode(['bluff' => 'FALSE']);
+                    echo "\n You get all the cards :(";
+                }
+                else{
+                    print json_encode(['bluff' => NULL]);
+                }
+            } else {
+                print json_encode(['errormesg' => "You have already objected!"]);
+            }
+        } else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]);
+        }   
+    break;
+
+    case 'HeSaidWhat':
+        if ($method == 'GET') {
+            print ShowSay();
+        } else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]);
         }
-        else{
-            print json_encode(['bluff' => NULL]);
-            echo "\n You didnt object!";
-        }
+    break;
+
+
+    ////////////////////////////////ONLY FOR TESTING///////////////////////////////////////////////
+
+    case 'WhoPlaysNext': //maybe should be available to others
+        if ($method == 'GET') {
+
+            $result = ShowNextPlay();
+            print $result;
 
         } else {    
             header("HTTP/1.1 400 Bad Request");
             print json_encode(['errormesg' => "Method $method not allowed here."]);
         }
     break;
-    ////////////////////////////////ONLY FOR TESTING///////////////////////////////////////////////
-    case 'Vroom':
-        if ($method == 'POST') {BroomTheBoard();}
-    break;
 
-    case 'Prepare':
-        if ($method == 'POST') {PrepareNewGame();} 
-    break;
-
-    case 'Winner':
-        if ($method == 'GET') {
-            $result = CheckForWinner();
-
-            switch ($result) {
-                case 1:
-                    print json_encode(['winner' => '1']);
-                    break;
-                case 2:
-                    print json_encode(['winner' => '2']);
-                    break;
-                case 3:
-                    print json_encode(['winner' => '3']);
-                    break;
-                case 4:
-                    print json_encode(['winner' => '4']);
-                    break;
-                default:
-                    print json_encode(['winner' => '0/kanis']);
-            }
-        }
-    break;
-
-    case 'PlayedLast':
-        if ($method == 'GET') {
-
-            $result = CheckWhoPlayedLast();
-            //echo($result);
-
-            switch ($result) {
-                case 1:
-                    print json_encode(['last' => '1']);
-                    break;
-                case 2:
-                    print json_encode(['last' => '2']);
-                    break;
-                case 3:
-                    print json_encode(['last' => '3']);
-                    break;
-                case 4:
-                    print json_encode(['last' => '4']);
-                    break;
-            }
-        }    
-    break;
     ////////////////////////////////////////////////////////////////////////////////////
     default:
         header("HTTP/1.1 404 Not Found");

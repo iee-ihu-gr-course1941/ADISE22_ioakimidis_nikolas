@@ -1,8 +1,8 @@
 <?php
 
 function FromTokenToPid(){
-    $session_id = session_id();
-    //$session_id = '';
+    //$session_id = session_id();
+    $session_id = '1';
     global $mysqli;
     $sql = "call TokenToPid(?)";
     $st = $mysqli->prepare($sql);
@@ -17,9 +17,7 @@ function FromTokenToPid(){
     $pid = $result['Pid'];
     $st->close();
     return $pid;
-    // print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
 }
-
 
 function AddPlayerIntoGame(){
     $session_id = session_id();
@@ -34,7 +32,6 @@ function AddPlayerIntoGame(){
     return ['result' => $result];
 }
 
-
 function ShowPlayerHand($pid){
     global $mysqli;
     $sql = "call showhand(?)";
@@ -47,7 +44,6 @@ function ShowPlayerHand($pid){
     $st->close();
     return $result;
 }
-
 
 function PlayCards($pid){
     global $mysqli;
@@ -62,6 +58,18 @@ function PlayCards($pid){
     return $result;
 }
 
+function PlayCardsInSameRound($pid, $s){
+    global $mysqli;
+    $sql =  'call Play(?,?,?,?,?,?)';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('iiiiis', $pid, $GLOBALS['input']['c1'], $GLOBALS['input']['c2'], $GLOBALS['input']['c3'], $GLOBALS['input']['c4'], $s);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+    $result = $result['@NotInHand'];
+
+    $st->close();
+    return $result;
+}
 
 function iObject($pid){
     global $mysqli;
@@ -75,8 +83,6 @@ function iObject($pid){
     $st->close();
     return $result;
 }
-
-
 
 ////////////////// These are system functions and aren't used for requests //////////////////
 
@@ -115,7 +121,7 @@ function CheckWhoPlayedLast() {
     $st = $mysqli->prepare($sql);
     $st->execute();
     $result = $st->get_result()->fetch_assoc();
-    $result = $result['@lastplayer'];
+    $result = $result['@Lastplayer'];
 
     $st->close();
     return $result;
@@ -142,4 +148,88 @@ function CanIPlay($pid){
     $st->close();
     return $result;
 }
+
+function ShowSay(){
+    global $mysqli;
+    $sql = "CALL ShowSaid()";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+    $result = $result['@Said'];
+
+    $st->close();
+    return $result;
+}
+
+function ShowNextPlay(){
+    global $mysqli;
+    $sql = "SELECT pid FROM GameState WHERE PlayOrder = 1";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+    $st->close();
+    return $result['pid'];
+}
+
+function HowManyObjected(){
+    global $mysqli;
+    $sql = "SELECT count(*) FROM gamestate WHERE Objected = 1";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+    $st->close();
+    return $result['count(*)'];
+}
+
+function SetObjected($pid, $x){
+    global $mysqli;
+    $sql = "UPDATE gamestate SET Objected = $x WHERE pid = $pid";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+
+    $st->close();
+}
+
+function HaveIObjected($pid){
+    global $mysqli;
+    $sql = "SELECT Objected FROM gamestate WHERE pid = $pid";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+    $st->close();
+    return $result['Objected'];
+}
+
+function LockMasterPlay($x){
+    global $mysqli;
+    $sql = "UPDATE gamedetails SET MasterLock = $x";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+
+    $st->close();
+}
+
+function IsMasterlocked(){
+    global $mysqli;
+    $sql = "SELECT MasterLock FROM gamedetails";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+    $st->close();
+    return $result['MasterLock'];
+}
+
+function MakeNewRound(){
+    LockMasterPlay(0);
+    SetObjected(1, 1); SetObjected(2, 1); SetObjected(3, 1); SetObjected(4, 1);
+    BroomTheBoard();
+    $result = CheckForWinner();
+
+    return $result;
+}
+
 ?>
