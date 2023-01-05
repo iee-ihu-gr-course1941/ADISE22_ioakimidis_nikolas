@@ -1,10 +1,10 @@
 <?php
 
 $host='localhost';
-$db = 'adise_test';
+$db = 'ADISE_2022';
 
 
-$user='root';
+$user='it185351';
 $pass='';
 
 

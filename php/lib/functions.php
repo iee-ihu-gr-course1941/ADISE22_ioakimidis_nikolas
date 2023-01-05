@@ -1,8 +1,9 @@
 <?php
 
 function FromTokenToPid(){
-    //$session_id = session_id();
-    $session_id = '1';
+    $session_id = session_id();
+    //$session_id = '1';
+    //header("HTTP/1.1 301 dada");
     global $mysqli;
     $sql = "call TokenToPid(?)";
     $st = $mysqli->prepare($sql);
@@ -161,15 +162,53 @@ function ShowSay(){
     return $result;
 }
 
+function GetUsernames(){
+    global $mysqli;
+    $sql = "SELECT Username FROM players";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $res = $st->get_result();
+    header('Content-type: application/json');
+    print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
+
+    $st->close();
+}
+
+function GetGameStatus(){
+    global $mysqli;
+    $sql = "SELECT g.Status FROM gamedetails g";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+
+    header('Content-type: application/json');
+    json_encode ($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
+
+    $st->close();
+    return ;
+}
+
 function ShowNextPlay(){
     global $mysqli;
-    $sql = "SELECT pid FROM GameState WHERE PlayOrder = 1";
+    $sql = "SELECT pid FROM gamestate WHERE PlayOrder = 1";
     $st = $mysqli->prepare($sql);
     $st->execute();
     $result = $st->get_result()->fetch_assoc();
 
     $st->close();
     return $result['pid'];
+}
+
+function EveryonePassed(){
+    global $mysqli;
+    $sql = "SELECT count(*) FROM gamestate WHERE Passed = 1";
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $result = $st->get_result()->fetch_assoc();
+
+    $st->close();
+    return $result['count(*)'];
 }
 
 function HowManyObjected(){
@@ -231,5 +270,4 @@ function MakeNewRound(){
 
     return $result;
 }
-
 ?>

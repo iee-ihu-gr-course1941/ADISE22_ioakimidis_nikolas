@@ -9,27 +9,20 @@ $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
 $GLOBALS['input'] = json_decode(file_get_contents('php://input'), true);
 session_start();
 
-/////
-//print HowManyObjected();
-//print ShowSay();
-/////
-
-//$result = MakeNewRound();
-// if ($result != 0) {
-//     print json_encode(['winner' => $result]);
-//     exit;
-// } 
-
-if (CanIPlay(FromTokenToPid()) == 1) {
-    print ("It's your turn to play cards!!!\n");
-}
-
+$result = CheckForWinner();
+if ($result != 0) {
+    print json_encode(['winner' => $result]);
+    PrepareNewGame();
+exit;
+} 
 switch ($request[0]) {
 
     case 'GetPlayersHand':
         if ($method == 'GET') {
+
             $pid = FromTokenToPid();
             print ShowPlayerHand($pid);
+
         } else {
             header("HTTP/1.1 400 Bad Request");
             print json_encode(['errormesg' => "Method $method not allowed here."]);
@@ -41,7 +34,7 @@ switch ($request[0]) {
             
             if (!isset($GLOBALS['input']['name'])){
                 header("HTTP/1.1 400 Bad Request");
-                echo('Enter username');
+                print('Enter username');
                 exit();
             }
             
@@ -70,7 +63,6 @@ switch ($request[0]) {
     case 'Play':
         if ($method == 'POST') {
 
-            
             $pid = FromTokenToPid();
             $result = CanIPlay($pid);
 
@@ -78,9 +70,13 @@ switch ($request[0]) {
                 print json_encode(['errormesg' => "Not your turn."]);
             } else {
 
+                if (!isset($GLOBALS['input']['c1']) AND !isset($GLOBALS['input']['c2']) AND !isset($GLOBALS['input']['c3']) AND !isset($GLOBALS['input']['c4'])) {
+                    print json_encode(['errormesg' => "You need to play something."]);
+                    exit();
+                }
+
                 $result = IsMasterlocked();
                 if ($result == 0) {
-
                     $result = PlayCards($pid);
                     if ($result == 1) {
                         print json_encode(['errormesg' => "Cards not in player's hand"]);
@@ -93,9 +89,8 @@ switch ($request[0]) {
                     }
                     FindPLayOrder($pid+1);
                     LockMasterPlay(1);
-                    //json_encode(['Said' => "ShowSay()"]);
                 } else {
-                    print json_encode(['errormesg' => "You can not throw a new Figure."]);
+                    print json_encode(['errormesg' => "You can't throw a new Figure."]);
                 }
             }
         }else {    
@@ -124,6 +119,19 @@ switch ($request[0]) {
                         if ($result == 1) {
                             print json_encode(['errormesg' => "Cards not in player's hand"]);
                             exit;
+                        } else if ($result == 2){
+                            for ($i = 1; $i <= 4; $i++) {
+                                if ($i != $pid) {
+                                    SetObjected($i, 1);
+                                }
+                            }
+                            FindPLayOrder($pid+1);
+                            print ('You skipped your turn!');
+                            $result = EveryonePassed();
+                            if ($result == 4){
+                                $result = MakeNewRound();
+                            }
+                            exit;
                         }
                         for ($i = 1; $i <= 4; $i++) {
                             if ($i != $pid) {
@@ -131,14 +139,13 @@ switch ($request[0]) {
                             }
                         }
                         FindPLayOrder($pid+1);
-                        //json_encode(['Said' => "ShowSay()"]);
                     }
                 } else {
-                    print json_encode(['errormesg' => "You should play with a new Figure :)"]);
+                    print json_encode(['errormesg' => "You should play with a new Figure."]);
                     exit;  
                 }     
             } else {
-                print json_encode(['errormesg' => "It's not your turn to play."]);
+                print json_encode(['errormesg' => "Not your turn."]);
                 exit; 
             }        
         }else {    
@@ -153,9 +160,9 @@ switch ($request[0]) {
             $pid = FromTokenToPid();
             $result = HaveIObjected($pid);
             if ($result == 0){
+
                 $pid = FromTokenToPid();    
-                $result = iObject($pid);    
-                    
+                $result = iObject($pid);
                 if ($result == 1) {
                     print json_encode(['bluff' => 'TRUE']);
                     echo "\n He gets all the cards back :)";
@@ -165,9 +172,9 @@ switch ($request[0]) {
                 }
                 else{
                     print json_encode(['bluff' => NULL]);
-                }
+                }     
             } else {
-                print json_encode(['errormesg' => "You have already objected!"]);
+                print json_encode(['errormesg' => "You can't object now."]);
             }
         } else {    
             header("HTTP/1.1 400 Bad Request");
@@ -177,14 +184,32 @@ switch ($request[0]) {
 
     case 'HeSaidWhat':
         if ($method == 'GET') {
-            print ShowSay();
+            print json_encode(['mesg' => ShowSay()]);
         } else {    
             header("HTTP/1.1 400 Bad Request");
             print json_encode(['errormesg' => "Method $method not allowed here."]);
         }
     break;
 
-
+    case 'ShowUsernames':
+        if ($method == 'GET') {
+            GetUsernames();
+        } else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]);
+        }
+    break;
+    
+    case 'ShowGamesStatus':
+        if ($method == 'GET') {
+            GetGameStatus();
+            print json_encode();
+        } else {    
+            header("HTTP/1.1 400 Bad Request");
+            print json_encode(['errormesg' => "Method $method not allowed here."]);
+        }
+    break;
+    
     ////////////////////////////////ONLY FOR TESTING///////////////////////////////////////////////
 
     case 'WhoPlaysNext': //maybe should be available to others
@@ -199,10 +224,21 @@ switch ($request[0]) {
         }
     break;
 
+
+    $result = EveryonePassed();
+    if ($result == 4){
+        echo ('$result MESA');
+        $result = MakeNewRound();
+        if ($result != 0) {
+            print json_encode(['winner' => $result]);
+        exit;
+        } 
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////
     default:
         header("HTTP/1.1 404 Not Found");
         print json_encode(['errormesg' => "Not found."]);
-        break;
+        break;        
 }
 ?>
