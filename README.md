@@ -28,7 +28,7 @@ body json
 }
 Ορίζεις απο 1 έως 4 κάρτες με το id τους και το τί έχεις πει. Τουλαχιστον ένα c πεδίο είναι υποχρεωτικό.
 ```
-Διαλέγεις αν πείς μπλόφα η πάσο. 
+Player can choose if he wants to pass or object by inputting 0 or 1. He is forced to take this action.
 ```
 POST /Objection  
 body json
