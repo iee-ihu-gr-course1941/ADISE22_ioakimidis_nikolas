@@ -179,14 +179,11 @@ function GetGameStatus(){
     $sql = "SELECT g.Status FROM gamedetails g";
     $st = $mysqli->prepare($sql);
     $st->execute();
-    $result = $st->get_result()->fetch_assoc();
-
-
+    $res = $st->get_result();
     header('Content-type: application/json');
-    json_encode ($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
+    print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
 
     $st->close();
-    return ;
 }
 
 function ShowNextPlay(){
