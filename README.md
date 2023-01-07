@@ -4,18 +4,19 @@
 ## API URL
 [http://users.iee.ihu.gr/~it185351/php/index.php](http://users.iee.ihu.gr/~it185351/php/index.php)
 
-## Περιγραφή API
+## API discription
 
-Join Game.
+Used to join the game.
 ```
 POST /AddPlayer 
 body json
 {
     "name":"example name"
 }
+Player inputs his desired username to enter the match. Max 4 players, each with a unique token.
 ```
 
-Κίνηση παίκτη.
+Used to play with a new "figure" of cards.
 ```
 POST /Play 
 body json
@@ -26,16 +27,16 @@ body json
     "c4": 38,
     "s": "3"
 }
-Ορίζεις απο 1 έως 4 κάρτες με το id τους και το τί έχεις πει. Τουλαχιστον ένα c πεδίο είναι υποχρεωτικό.
+The player chooses 1-4 cards by inputting their Cid and the figure he wants to say. S and at least one C fields is mandatory.
 ```
-Player can choose if he wants to pass or object by inputting 0 or 1. He is forced to take this action.
+Used to object or pass.
 ```
 POST /Objection  
 body json
 {
         "DoIt": 1
 }
-0 Για πάσο, 1 για μπλόφα.
+Player chooses if he wants to pass or object, by inputting 0 or 1. He is forced to take this action every time someone plays cards..
 ```
 Παίζεις σύμφωνα με τον χαρακτήρα του προηγούμενου.
 ```
