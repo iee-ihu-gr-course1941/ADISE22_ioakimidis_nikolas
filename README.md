@@ -4,14 +4,14 @@
 ## API URL
 [http://users.iee.ihu.gr/~it185351/php/index.php](http://users.iee.ihu.gr/~it185351/php/index.php)
 
-## API discription
+## API discription 
 
 Used to join the game.
 ```
 POST /AddPlayer 
 body json
 {
-    "name":"example name"
+    "name":"Mpampis"
 }
 Player inputs his desired username to enter the match. Max 4 players, each with a unique token.
 ```
@@ -38,7 +38,7 @@ body json
 }
 Player chooses if he wants to pass or object, by inputting 0 or 1. He is forced to take this action every time someone plays cards..
 ```
-Παίζεις σύμφωνα με τον χαρακτήρα του προηγούμενου.
+Used to play cards in the same round with the same Cid.
 ```
 POST /PlaySameRound
 {
@@ -47,37 +47,38 @@ POST /PlaySameRound
     "c3": 3,
     "c4": 42
 }
-Το ίδιο με το play αλλά χωρίς το s.
+The player is forced to use the "Figure" the previous player said. In case he only give nulls, it means he passed his turn.
 ```
-Επιστρέφει τι είπε ο προηγούμενος παίκτης.
+Returns what the previous player said he played.
 ```
 GET /HeSaidWhat
-{"mesg": Κ}
+{"mesh" :"Q"}
 ```
 
-Επιστρέφει ποίος παίκτης είναι επόμενος να παίξει.
+Returns the player who's next to play.
 ```
 GET /WhoPlaysNext
+
 ```
 
-Επιστρέφει τα usernames των παικτών του παιχνίδιού.
+Returns the usernames of the players.
 ```
 GET /ShowUsernames
 
 [
     {
-        "Username": "test1"
+        "Username": "Mpampis"
     },
     {
-        "Username": "test1"
+        "Username": "Takis"
     },
     {
-        "Username": "test1"
+        "Username": "Makis"
     }
 ]
 
 ```
-Επιστρέφει το status του παιχνιδιού.
+Returns the current status of the game.
 ```
 GET /ShowGamesStatus
 
@@ -89,7 +90,7 @@ GET /ShowGamesStatus
 
 ```
 
-Εμφανίζει τα φύλλα που έχεις στο χέρί.
+Returns the cards in the player's hand.
 ```
 GET /GetPlayersHand
 
@@ -113,7 +114,10 @@ GET /GetPlayersHand
 "Cid": 34,
 "Figure": "8",
 "Class": "club"
-},...
+},
+...
+...
+...
 ]
 
 ```
