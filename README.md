@@ -4,7 +4,7 @@
 ## API URL
 [http://users.iee.ihu.gr/~it185351/php/index.php](http://users.iee.ihu.gr/~it185351/php/index.php)
 
-## API discription 
+## API description.
 
 Used to join the game.
 ```
@@ -115,8 +115,8 @@ GET /GetPlayersHand
 "Figure": "8",
 "Class": "club"
 },
-...
-...
+...,
+...,
 ...
 ]
 
