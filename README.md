@@ -1,7 +1,7 @@
 
 # ADISE22_ioakimidis_nikolas
 
-## URL API
+## API URL
 [http://users.iee.ihu.gr/~it185351/php/index.php](http://users.iee.ihu.gr/~it185351/php/index.php)
 
 ## Περιγραφή API
@@ -11,7 +11,7 @@ Join Game.
 POST /AddPlayer 
 body json
 {
-    "name":"<username>"
+    "name":"example name"
 }
 ```
 
@@ -21,9 +21,9 @@ POST /Play
 body json
 {
     "c1": 29,
-    "c2": 16,
+    "c2": null,
     "c3": 3,
-    "c4": null,
+    "c4": 38,
     "s": "3"
 }
 Ορίζεις απο 1 έως 4 κάρτες με το id τους και το τί έχεις πει. Τουλαχιστον ένα c πεδίο είναι υποχρεωτικό.
