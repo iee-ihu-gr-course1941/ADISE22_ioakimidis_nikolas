@@ -161,12 +161,6 @@ GET /GetPlayersHand
 "Figure": "8",
 "Class": "club"
 }
-
-
-
 ]
 
 ```
-
-
-| 
