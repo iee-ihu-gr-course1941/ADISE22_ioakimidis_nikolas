@@ -160,15 +160,13 @@ GET /GetPlayersHand
 "Cid": 34,
 "Figure": "8",
 "Class": "club"
-},
-...,
-...,
-...
+}
+
+
+
 ]
 
 ```
 
-| Syntax | Description |
-| ----------- | ----------- |
-| Header | Title |
-| Paragraph | Text |
+
+| 
